@@ -10,6 +10,7 @@ import {
 import { queryAllTransactionsGQL } from "arweavekit/graphql";
 import { Buffer } from "buffer";
 import Transaction from "arweave/node/lib/transaction";
+import { createContract, writeContract } from "arweavekit/contract";
 
 async function logIn() {
   const userDetails = await Othent.logIn({
@@ -147,6 +148,36 @@ edges {
     console.log("This is the result of the query", res);
   }
 
+  async function createContractTestNet() {
+    const { contract, result } = await createContract({
+      environment: "testnet",
+      initialState: JSON.stringify({ counter: 0 }),
+      contractSource: `
+    export function handle(state, action) {
+      if (action.input.function === 'decrement') {
+        state.counter -= 1
+      }
+      if (action.input.function === 'increment') {
+        state.counter += 1
+      }
+      return { state }
+    }`,
+    });
+    console.log(result, contract);
+  }
+
+  async function writeContractTestNet() {
+    const response = await writeContract({
+      environment: "testnet",
+      contractTxId: "CO7NkmEVj4wEwPySxYUY0_ElrEqU4IeTglU2IilCnLA",
+      options: {
+        function: "increment",
+      },
+      // strategy: "arweave",
+    });
+    console.log(response);
+  }
+
   return (
     <div className="container flex justify-center pt-12">
       <div className="flex flex-col gap-4 w-1/2">
@@ -165,6 +196,12 @@ edges {
         </button>
         <button className="border-4" onClick={queryGQLTxn}>
           Query All GQL Transactions
+        </button>
+        <button className="border-4" onClick={createContractTestNet}>
+          Create Contract
+        </button>
+        <button className="border-4" onClick={writeContractTestNet}>
+          Write Contract
         </button>
       </div>
     </div>
